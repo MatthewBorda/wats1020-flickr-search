@@ -6,9 +6,8 @@
 //
 // Allow users to click the images to see a larger version with more information.
 $(document).on('ready', function(){
-    // Place your code here, inside the document ready handler.
 
-    // Create a function called `searchImages()`. This function will handle the
+   // Create a function called `searchImages()`. This function will handle the
     // process of taking a user's search terms and sending them to Flickr for a
     // response.
 
@@ -25,7 +24,67 @@ $(document).on('ready', function(){
         //      that displays and refreshes the content appropriately.
         //
         // 4.   Update the display to add the images to the list with the id
-        //      `#images`.
+        //      `#images`.	
+  var searchImages = function(tags) {
+    var flickrAPI = "http://api.flickr.com/services/feeds/photos_public.gne?jsoncallback=?";
+    console.log(tags);
+    $('#images').innerHTML = '<li class="search-throbber">Searching...</li>';
+    $.getJSON( flickrAPI, {
+      tags: tags,
+      tagmode: "any",
+      format: "json"
+    }).done(function( data ) {
+      $('#images').empty();
+      $('h1.search-title').first()[0].innerHTML = "Search for: " + tags;
+      $.each( data.items, function( i, item ) {
+        var newListItem = $("<div class=\"col-xs-6 col-sm-3 col-md-3 col-lg-3 img-responsive\">")
+        // If you're not doing the modal, then show info about the image.
+        var newTitle = $('<p class="image-title">').html(item.title).appendTo(newListItem);
+        var newDate = $('<p class="image-date">').text(item.date_taken).appendTo(newListItem);
+        var newDescription = $('<p class="image-description">').html(item.description).appendTo(newListItem);
+         var newLink = $('<a>').attr('href', item.link).text('View on Flickr.').appendTo(newListItem);
+
+        // Button only needed if you're doing the modal
+        var newButton = $("<button class='btn btn-sm btn-primary'>enlarge</button>").attr({
+          'data-title': item.title,
+          'data-toggle': "modal",
+          'data-target': "#infoModal",
+          'data-imgsrc': item.media.m,
+          'data-description': item.description,
+          'type': "button"
+        }).appendTo(newListItem);
+        newListItem.appendTo( "#images" );
+        if ( i === 11 ) {
+          return false;
+        }
+      });
+    });
+  };
+
+  $('button.search').on('click', function(event){
+    event.preventDefault();
+    var searchTextInput = $(event.target.parentElement).find('input[name="searchText"]')[0];
+    console.log(searchTextInput);
+    searchImages(searchTextInput.value);
+  });
+
+  $('#infoModal').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget); // Button that triggered the modal
+    var title = button.data('title'); // Extract info from data-* attributes
+    var imgSrc = button.data('imgsrc');
+    var imageDescription = button.data('description');
+
+    // Update the modal's content. We'll use jQuery here.
+    var modal = $(this);
+    modal.find('.modal-title').html(title);
+    var modalBody = modal.find('.modal-body');
+    modalBody.empty();
+    var modalDescription = $("<p class='image-description'>").html(imageDescription).appendTo(modalBody);
+
+        
+  });
+
+
 
     // Attach an event to the search button (`button.search`) to execute the
     // search when clicked.
@@ -40,6 +99,13 @@ $(document).on('ready', function(){
         //
         // 3.   Execute the `searchImages()` function to fetch images for the
         //      user.
+	$('button.search').click(function(event){
+	event.preventDefault();
+	var newSearch = $(event.target.parentElement).find('input[name="searchText"]')[0];
+	console.log(newSearch);
+	searchImages(newSearch.value);
+  });
+
 
     // STRETCH GOAL: Add a "more info" popup using the technique shown on the
     // Bootstrap Modal documentation: http://getbootstrap.com/javascript/#modals-related-target
